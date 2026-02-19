@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "Keyword Highlighter",
+  "version": "1.0.0",
+  "description": "Automatically highlights user-defined keywords in the Zotero PDF reader (Ctrl+Shift+H)",
+  "author": "DEIN-NAME",
+  "homepage_url": "https://github.com/DEIN-USERNAME/zotero-keyword-highlighter",
+  "icons": {
+    "48": "content/icons/icon.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "keyword-highlighter@zotero-plugin",
+      "update_url": "https://raw.githubusercontent.com/DEIN-USERNAME/zotero-keyword-highlighter/main/updates.json",
+      "strict_min_version": "7.0",
+      "strict_max_version": "8.*"
+    }
+  }
+}
