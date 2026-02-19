@@ -4,7 +4,7 @@
       "updates": [
         {
           "version": "1.0.0",
-          "update_link": "https://github.com/DEIN-USERNAME/zotero-keyword-highlighter/releases/download/v1.0.0/keyword-highlighter.xpi",
+          "update_link": "https://github.com/quertt/zotero-keyword-highlighter/releases/download/v1.0.0/keyword-highlighter.xpi",
           "applications": {
             "zotero": {
               "strict_min_version": "7.0"
