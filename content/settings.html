@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Keyword Highlighter – Einstellungen</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: system-ui, Arial, sans-serif;
+  margin: 0; padding: 16px 18px;
+  background: #f4f4f4; color: #222; font-size: 13px;
+}
+h2 { margin: 0 0 14px; font-size: 15px; font-weight: 600; }
+#cats {
+  display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto; max-height: 360px; padding-right: 4px;
+}
+.cat {
+  background: #fff; border: 1px solid #ddd;
+  border-radius: 7px; padding: 10px 12px;
+}
+.cat-header {
+  display: grid; grid-template-columns: 1fr 34px;
+  gap: 8px; align-items: center; margin-bottom: 8px;
+}
+.cat-name {
+  border: 1px solid #ccc; border-radius: 4px;
+  padding: 5px 8px; font-size: 13px; width: 100%;
+}
+.cat-color {
+  border: 1px solid #ccc; border-radius: 4px;
+  padding: 5px; font-size: 13px; width: 100%;
+}
+.del {
+  background: #e55; color: #fff; border: none;
+  border-radius: 4px; padding: 5px 9px;
+  font-size: 14px; cursor: pointer;
+}
+.kw-label {
+  display: block; font-size: 11px; color: #888; margin-bottom: 3px;
+}
+.cat-kws {
+  border: 1px solid #ccc; border-radius: 4px;
+  padding: 5px 8px; font-size: 12px;
+  width: 100%; resize: vertical; min-height: 50px;
+  font-family: inherit;
+}
+#add {
+  margin-top: 8px; background: #5fb236; color: #fff;
+  border: none; border-radius: 5px;
+  padding: 7px 16px; font-size: 13px; cursor: pointer;
+}
+#btns { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+#save {
+  background: #2ea8e5; color: #fff; border: none;
+  border-radius: 5px; padding: 7px 20px;
+  font-size: 13px; cursor: pointer; font-weight: 600;
+}
+#cancel {
+  background: #999; color: #fff; border: none;
+  border-radius: 5px; padding: 7px 14px;
+  font-size: 13px; cursor: pointer;
+}
+</style>
+</head>
+<body>
+<h2>Keyword Highlighter – Kategorien &amp; Farben</h2>
+<div id="cats"></div>
+<button id="add">+ Kategorie hinzufügen</button>
+<div id="btns">
+  <button id="cancel">Abbrechen</button>
+  <button id="save">Speichern</button>
+</div>
+<script src="settings.js"></script>
+</body>
+</html>
