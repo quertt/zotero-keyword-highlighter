@@ -3,8 +3,8 @@
   "name": "Keyword Highlighter",
   "version": "1.0.0",
   "description": "Automatically highlights user-defined keywords in the Zotero PDF reader (Ctrl+Shift+H)",
-  "author": "DEIN-NAME",
-  "homepage_url": "https://github.com/DEIN-USERNAME/zotero-keyword-highlighter",
+  "author": "quertt",
+  "homepage_url": "https://github.com/quertt/zotero-keyword-highlighter",
   "icons": {
     "48": "content/icons/icon.png"
   },
