@@ -77,15 +77,27 @@ KeywordHighlighter = {
   addToWindow(win) {
     const doc = win.document;
 
-    // Fluent für Zotero 8 laden
-    win.MozXULElement?.insertFTLIfNeeded?.("keyword-highlighter.ftl");
+    // Clean up legacy context menu elements from older plugin versions
+    doc.getElementById("kwhl-ctx-sep")?.remove();
+    doc.getElementById("kwhl-ctx-menuitem")?.remove();
+
+    // Tools-Menü
+    const toolsPopup = doc.getElementById("menu_ToolsPopup");
+    if (toolsPopup && !doc.getElementById("kwhl-tools-menuitem")) {
+      const mi = doc.createXULElement("menuitem");
+      mi.id = "kwhl-tools-menuitem";
+      mi.setAttribute("label", this._str("tools.menu.label"));
+      mi.addEventListener("command", () => this.openSettingsDialog(win));
+      toolsPopup.appendChild(mi);
+      this._storeElement(mi.id);
+    }
 
     // Shortcut am Hauptfenster
     const keyHandler = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "H") {
         e.preventDefault();
         e.stopPropagation();
-        this.highlight(win);
+        this.highlight(win).catch(err => Zotero.logError(err));
       }
     };
     win.addEventListener("keydown", keyHandler, true);
@@ -118,7 +130,7 @@ KeywordHighlighter = {
           if (e.ctrlKey && e.shiftKey && e.key === "H") {
             e.preventDefault();
             e.stopPropagation();
-            this.highlight(win);
+            this.highlight(win).catch(err => Zotero.logError(err));
           }
         }, true);
       }
@@ -168,6 +180,7 @@ KeywordHighlighter = {
 
   // ── Highlight ─────────────────────────────────────────────────────────────
   async highlight(win) {
+    try {
     const categories = this._loadCategories();
     const keywords = categories.flatMap(c => c.keywords.filter(k => k.trim()));
 
@@ -208,5 +221,8 @@ KeywordHighlighter = {
     scriptEl.textContent = script;
     iframeWin.document.head.appendChild(scriptEl);
     scriptEl.remove();
+  } catch (err) {
+    Zotero.logError(err);
+  }
   }
 };
