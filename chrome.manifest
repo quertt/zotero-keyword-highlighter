@@ -1,1 +1,5 @@
-content keyword-highlighter content/
+content  keyword-highlighter            content/
+locale   keyword-highlighter  en-US     locale/en-US/
+locale   keyword-highlighter  de-DE     locale/de-DE/
+locale   keyword-highlighter  es-ES     locale/es-ES/
+locale   keyword-highlighter  fr-FR     locale/fr-FR/

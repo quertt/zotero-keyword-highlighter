@@ -2,15 +2,25 @@
 
 var args = null;
 var cats = [];
+var S = {};  // lokalisierte Strings
 
 try {
   args = window.arguments && window.arguments[0];
   if (args && args.categories) {
     cats = JSON.parse(JSON.stringify(args.categories));
   }
+  if (args && args.strings) {
+    S = args.strings;
+  }
 } catch (e) {
   console.error("KWH settings: Fehler beim Lesen der Argumente", e);
 }
+
+// UI-Texte setzen
+if (S.title)  document.title = S.title;
+if (S.addCat) document.getElementById("add").textContent  = S.addCat;
+if (S.save)   document.getElementById("save").textContent = S.save;
+if (S.cancel) document.getElementById("cancel").textContent = S.cancel;
 
 function makeCatRow(cat, index) {
   var div = document.createElement("div");
@@ -24,7 +34,7 @@ function makeCatRow(cat, index) {
   nameInput.type        = "text";
   nameInput.className   = "cat-name";
   nameInput.value       = cat.name;
-  nameInput.placeholder = "Kategoriename";
+  nameInput.placeholder = S.placeholder || "Category name";
 
   var delBtn = document.createElement("button");
   delBtn.className   = "del";
@@ -40,7 +50,7 @@ function makeCatRow(cat, index) {
 
   var label = document.createElement("span");
   label.className   = "kw-label";
-  label.textContent = "Schlagwörter (kommagetrennt)";
+  label.textContent = S.kwLabel || "Keywords (comma-separated)";
 
   var textarea = document.createElement("textarea");
   textarea.className   = "cat-kws";
@@ -74,7 +84,7 @@ function collectCats() {
 
 document.getElementById("add").addEventListener("click", function() {
   cats = collectCats();
-  cats.push({ name: "Neue Kategorie", keywords: [] });
+  cats.push({ name: "", keywords: [] });
   renderCats();
 });
 

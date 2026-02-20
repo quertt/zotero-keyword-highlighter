@@ -1,6 +1,7 @@
 /**
  * Keyword Highlighter for Zotero 8
- * Ctrl+Shift+H: Hebt alle definierten Keywords im PDF-Reader hervor.
+ * Ctrl+Shift+H: Highlights user-defined keywords in the PDF reader.
+ * Supports: English, German, Spanish, French
  */
 
 KeywordHighlighter = {
@@ -11,20 +12,46 @@ KeywordHighlighter = {
   initialized: false,
   addedElementIDs: [],
   _keyHandlers: [],
-
-  COLORS: {
-    "Gelb":    "#ffd400",
-    "Rot":     "#ff6666",
-    "Grün":    "#5fb236",
-    "Blau":    "#2ea8e5",
-    "Lila":    "#a28ae5",
-    "Magenta": "#e56eee",
-    "Orange":  "#f19837",
-    "Grau":    "#aaaaaa"
-  },
+  _strings: null,
 
   PREF_KEY: "extensions.keyword-highlighter.categories",
 
+  // ── Lokalisierung ─────────────────────────────────────────────────────────
+  _loadStrings() {
+    if (this._strings) return this._strings;
+    try {
+      this._strings = Services.strings.createBundle(
+        "chrome://keyword-highlighter/locale/keyword-highlighter.properties"
+      );
+    } catch (e) {
+      Zotero.logError(e);
+      this._strings = null;
+    }
+    return this._strings;
+  },
+
+  _str(key) {
+    try {
+      return this._loadStrings().GetStringFromName(key);
+    } catch (e) {
+      // Fallback: englischer Hardcode-Text
+      const fallback = {
+        "tools.menu.label":          "Keyword Highlighter\u2026",
+        "context.menu.label":        "Highlight Keywords (Ctrl+Shift+H)",
+        "settings.title":            "Keyword Highlighter",
+        "settings.category.placeholder": "Category name",
+        "settings.keywords.label":   "Keywords (comma-separated)",
+        "settings.add.category":     "+ Add category",
+        "settings.save":             "Save",
+        "settings.cancel":           "Cancel",
+        "alert.no.keywords":         "No keywords defined.\nPlease go to Tools \u2192 Keyword Highlighter\u2026",
+        "alert.no.pdf":              "No PDF open.\nPlease open a PDF first, then press Ctrl+Shift+H.",
+      };
+      return fallback[key] || key;
+    }
+  },
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   init({ id, version, rootURI }) {
     if (this.initialized) return;
     this.id = id;
@@ -50,12 +77,15 @@ KeywordHighlighter = {
   addToWindow(win) {
     const doc = win.document;
 
+    // Fluent für Zotero 8 laden
+    win.MozXULElement?.insertFTLIfNeeded?.("keyword-highlighter.ftl");
+
     // Tools-Menü
     const toolsPopup = doc.getElementById("menu_ToolsPopup");
     if (toolsPopup && !doc.getElementById("kwhl-tools-menuitem")) {
       const mi = doc.createXULElement("menuitem");
       mi.id = "kwhl-tools-menuitem";
-      mi.setAttribute("label", "Keyword Highlighter \u2026");
+      mi.setAttribute("label", this._str("tools.menu.label"));
       mi.addEventListener("command", () => this.openSettingsDialog(win));
       toolsPopup.appendChild(mi);
       this._storeElement(mi.id);
@@ -68,7 +98,7 @@ KeywordHighlighter = {
       sep.id = "kwhl-ctx-sep";
       const mi2 = doc.createXULElement("menuitem");
       mi2.id = "kwhl-ctx-menuitem";
-      mi2.setAttribute("label", "Keywords hervorheben (Ctrl+Shift+H)");
+      mi2.setAttribute("label", this._str("context.menu.label"));
       mi2.addEventListener("command", () => this.highlight(win));
       itemMenu.appendChild(sep);
       itemMenu.appendChild(mi2);
@@ -104,7 +134,6 @@ KeywordHighlighter = {
     if (!this.addedElementIDs.includes(id)) this.addedElementIDs.push(id);
   },
 
-  // Wartet auf Reader und registriert Shortcut im iframe
   _watchForReaders(win) {
     const interval = win.setInterval(() => {
       for (const reader of (Zotero.Reader?._readers || [])) {
@@ -123,16 +152,16 @@ KeywordHighlighter = {
     win.setTimeout(() => win.clearInterval(interval), 600000);
   },
 
-  // ── Preferences ──────────────────────────────────────────────────────────────
+  // ── Preferences ───────────────────────────────────────────────────────────
   _loadCategories() {
     try {
       const raw = Zotero.Prefs.get(this.PREF_KEY, true);
       if (raw) return JSON.parse(raw);
     } catch (e) {}
     return [
-      { name: "Methoden",   color: "#2ea8e5", keywords: ["Methode", "Methodologie", "Ansatz"] },
-      { name: "Ergebnisse", color: "#5fb236", keywords: ["Ergebnis", "Befund", "Resultat"] },
-      { name: "Theorie",    color: "#ffd400", keywords: ["Theorie", "Modell", "Framework"] }
+      { name: "Methods",  keywords: ["method", "methodology", "approach"] },
+      { name: "Results",  keywords: ["result", "finding", "outcome"] },
+      { name: "Theory",   keywords: ["theory", "model", "framework"] }
     ];
   },
 
@@ -140,33 +169,41 @@ KeywordHighlighter = {
     Zotero.Prefs.set(this.PREF_KEY, JSON.stringify(cats), true);
   },
 
-  // ── Settings dialog ──────────────────────────────────────────────────────────
+  // ── Settings dialog ───────────────────────────────────────────────────────
   openSettingsDialog(win) {
     const args = {
       categories: this._loadCategories(),
+      strings: {
+        title:       this._str("settings.title"),
+        placeholder: this._str("settings.category.placeholder"),
+        kwLabel:     this._str("settings.keywords.label"),
+        addCat:      this._str("settings.add.category"),
+        save:        this._str("settings.save"),
+        cancel:      this._str("settings.cancel"),
+      },
       callback: (result) => this._saveCategories(result)
     };
     win.openDialog(
       "chrome://keyword-highlighter/content/settings.html",
       "kwhl-settings",
-      "chrome,dialog,modal,resizable,centerscreen,width=640,height=540",
+      "chrome,dialog,modal,resizable,centerscreen,width=620,height=520",
       args
     );
   },
 
-  // ── Hauptfunktion ─────────────────────────────────────────────────────────────
+  // ── Highlight ─────────────────────────────────────────────────────────────
   async highlight(win) {
     const categories = this._loadCategories();
     const keywords = categories.flatMap(c => c.keywords.filter(k => k.trim()));
 
     if (!keywords.length) {
-      win.alert("Keine Schlagwörter definiert.\nBitte unter Tools → Keyword Highlighter … Kategorien anlegen.");
+      win.alert(this._str("alert.no.keywords"));
       return;
     }
 
     const reader = (Zotero.Reader?._readers || []).findLast(r => r?._iframeWindow);
     if (!reader) {
-      win.alert("Kein PDF geöffnet.\nBitte zuerst eine PDF im Reader öffnen, dann Ctrl+Shift+H drücken.");
+      win.alert(this._str("alert.no.pdf"));
       return;
     }
 
