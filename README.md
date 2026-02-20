@@ -43,7 +43,7 @@ All defined keywords will be highlighted immediately across the entire document.
 
 ## Requirements
 
-- Zotero 7.0 or later (tested on Zotero 8)
+- Zotero 8.0 or later
 - Windows, macOS, or Linux
 
 ## Building from source
