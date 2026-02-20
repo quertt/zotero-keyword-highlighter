@@ -37,7 +37,6 @@ KeywordHighlighter = {
       // Fallback: englischer Hardcode-Text
       const fallback = {
         "tools.menu.label":          "Keyword Highlighter",
-        "context.menu.label":        "Highlight Keywords (Ctrl+Shift+H)",
         "settings.title":            "Keyword Highlighter",
         "settings.category.placeholder": "Category name",
         "settings.keywords.label":   "Keywords (comma-separated)",
@@ -90,21 +89,6 @@ KeywordHighlighter = {
       mi.addEventListener("command", () => this.openSettingsDialog(win));
       toolsPopup.appendChild(mi);
       this._storeElement(mi.id);
-    }
-
-    // Kontextmenü
-    const itemMenu = doc.getElementById("zotero-itemmenu");
-    if (itemMenu && !doc.getElementById("kwhl-ctx-sep")) {
-      const sep = doc.createXULElement("menuseparator");
-      sep.id = "kwhl-ctx-sep";
-      const mi2 = doc.createXULElement("menuitem");
-      mi2.id = "kwhl-ctx-menuitem";
-      mi2.setAttribute("label", this._str("context.menu.label"));
-      mi2.addEventListener("command", () => this.highlight(win));
-      itemMenu.appendChild(sep);
-      itemMenu.appendChild(mi2);
-      this._storeElement(sep.id);
-      this._storeElement(mi2.id);
     }
 
     // Shortcut am Hauptfenster

@@ -23,16 +23,14 @@ A Zotero 8 plugin that automatically highlights user-defined keywords in the PDF
 
 Go to **Tools → Keyword Highlighter …** to open the settings dialog.
 
-- Add categories with **+ Kategorie hinzufügen**
+- Add categories with **+ Add category**
 - Enter a category name and comma-separated keywords
-- Click **Speichern** to save
+- Click **Save** to save
 
 ### Highlighting keywords
 
 1. Open a PDF in the Zotero reader (double-click any PDF attachment)
 2. Press **Ctrl+Shift+H** to highlight all keywords
-
-Alternatively: right-click any item in your library → **Keywords hervorheben (Ctrl+Shift+H)**
 
 > **Note:** Highlights are temporary and disappear when the PDF is closed. Press Ctrl+Shift+H again after reopening.
 
@@ -51,17 +49,27 @@ keyword-highlighter/
 ├── bootstrap.js           # Lifecycle hooks (startup/shutdown)
 ├── chrome.manifest        # Chrome URL registration
 ├── prefs.js               # Default preferences
-└── content/
-    ├── keywordHighlighter.js  # Main plugin logic
-    ├── settings.html          # Settings dialog UI
-    └── settings.js            # Settings dialog logic
+├── content/
+│   ├── keywordHighlighter.js  # Main plugin logic
+│   ├── settings.html          # Settings dialog UI
+│   └── settings.js            # Settings dialog logic
+└── locale/
+    ├── en-US/             # English
+    ├── de-DE/             # German
+    ├── es-ES/             # Spanish
+    └── fr-FR/             # French
 ```
 
-To build the `.xpi` file:
+To build the `.xpi` file (Windows, requires [7-Zip](https://www.7-zip.org/)):
+
+```powershell
+7z a keyword-highlighter.xpi manifest.json bootstrap.js prefs.js chrome.manifest content\ locale\
+```
+
+On Linux/macOS:
 
 ```bash
-cd keyword-highlighter
-zip -r keyword-highlighter.xpi manifest.json bootstrap.js prefs.js chrome.manifest content/
+zip -r keyword-highlighter.xpi manifest.json bootstrap.js prefs.js chrome.manifest content/ locale/
 ```
 
 ## Publishing
