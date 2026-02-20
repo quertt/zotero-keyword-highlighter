@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Keyword Highlighter",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Automatically highlights user-defined keywords in the Zotero PDF reader (Ctrl+Shift+H)",
   "author": "Jork Groenewold",
   "homepage_url": "https://github.com/quertt/zotero-keyword-highlighter",
