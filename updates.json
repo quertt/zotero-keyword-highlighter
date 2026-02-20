@@ -3,9 +3,9 @@
     "keyword-highlighter@zotero-plugin": {
       "updates": [
         {
-          "version": "1.2.3",
-          "update_link": "https://github.com/quertt/zotero-keyword-highlighter/releases/download/v1.2.3/keyword-highlighter-v1.2.3.xpi",
-          "update_hash": "sha256:d2b0db8e6e2efc1faad4e04ad40f23a5ef05a6024b87b29aeb478cdfdca25958",
+          "version": "1.2.4",
+          "update_link": "https://github.com/quertt/zotero-keyword-highlighter/releases/download/v1.2.4/keyword-highlighter-v1.2.4.xpi",
+          "update_hash": "sha256:7c8842fd7e2d44587071aa7a7f15d044b8df701d491710f9e6f08b670d0e2ac8",
           "applications": {
             "zotero": {
               "strict_min_version": "7.0"
