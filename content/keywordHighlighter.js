@@ -80,17 +80,6 @@ KeywordHighlighter = {
     // Fluent für Zotero 8 laden
     win.MozXULElement?.insertFTLIfNeeded?.("keyword-highlighter.ftl");
 
-    // Tools-Menü
-    const toolsPopup = doc.getElementById("menu_ToolsPopup");
-    if (toolsPopup && !doc.getElementById("kwhl-tools-menuitem")) {
-      const mi = doc.createXULElement("menuitem");
-      mi.id = "kwhl-tools-menuitem";
-      mi.setAttribute("label", this._str("tools.menu.label"));
-      mi.addEventListener("command", () => this.openSettingsDialog(win));
-      toolsPopup.appendChild(mi);
-      this._storeElement(mi.id);
-    }
-
     // Shortcut am Hauptfenster
     const keyHandler = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "H") {
