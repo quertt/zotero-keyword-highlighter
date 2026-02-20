@@ -36,7 +36,7 @@ KeywordHighlighter = {
     } catch (e) {
       // Fallback: englischer Hardcode-Text
       const fallback = {
-        "tools.menu.label":          "Keyword Highlighter\u2026",
+        "tools.menu.label":          "Keyword Highlighter",
         "context.menu.label":        "Highlight Keywords (Ctrl+Shift+H)",
         "settings.title":            "Keyword Highlighter",
         "settings.category.placeholder": "Category name",
@@ -46,6 +46,7 @@ KeywordHighlighter = {
         "settings.cancel":           "Cancel",
         "alert.no.keywords":         "No keywords defined.\nPlease go to Tools \u2192 Keyword Highlighter\u2026",
         "alert.no.pdf":              "No PDF open.\nPlease open a PDF first, then press Ctrl+Shift+H.",
+        "settings.hint":             "Tip: Press Ctrl+Shift+H while a PDF is open to start keyword highlighting.",
       };
       return fallback[key] || key;
     }
@@ -180,6 +181,7 @@ KeywordHighlighter = {
         addCat:      this._str("settings.add.category"),
         save:        this._str("settings.save"),
         cancel:      this._str("settings.cancel"),
+        hint:        this._str("settings.hint"),
       },
       callback: (result) => this._saveCategories(result)
     };

@@ -12,7 +12,11 @@ function startup({ id, version, rootURI }, reason) {
     .getService(Components.interfaces.amIAddonManagerStartup);
   var manifestURI = Services.io.newURI(rootURI + "chrome.manifest");
   chromeHandle = aomStartup.registerChrome(manifestURI, [
-    ["content", "keyword-highlighter", rootURI + "content/"]
+    ["content", "keyword-highlighter", rootURI + "content/"],
+    ["locale",  "keyword-highlighter", "en-US", rootURI + "locale/en-US/"],
+    ["locale",  "keyword-highlighter", "de-DE", rootURI + "locale/de-DE/"],
+    ["locale",  "keyword-highlighter", "es-ES", rootURI + "locale/es-ES/"],
+    ["locale",  "keyword-highlighter", "fr-FR", rootURI + "locale/fr-FR/"],
   ]);
 
   // highlight.py aus der XPI in den Temp-Ordner extrahieren

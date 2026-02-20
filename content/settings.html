@@ -51,6 +51,10 @@ h2 { margin: 0 0 14px; font-size: 15px; font-weight: 600; }
   padding: 7px 16px; font-size: 13px; cursor: pointer;
 }
 #btns { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+#hint {
+  margin-top: 12px; font-size: 13px; color: #888;
+  text-align: center; font-style: italic;
+}
 #save {
   background: #2ea8e5; color: #fff; border: none;
   border-radius: 5px; padding: 7px 20px;
@@ -64,13 +68,14 @@ h2 { margin: 0 0 14px; font-size: 15px; font-weight: 600; }
 </style>
 </head>
 <body>
-<h2>Keyword Highlighter – Kategorien &amp; Farben</h2>
+<h2 id="title">Keyword Highlighter – Kategorien &amp; Farben</h2>
 <div id="cats"></div>
 <button id="add">+ Kategorie hinzufügen</button>
 <div id="btns">
   <button id="cancel">Abbrechen</button>
   <button id="save">Speichern</button>
 </div>
+<p id="hint"></p>
 <script src="settings.js"></script>
 </body>
 </html>

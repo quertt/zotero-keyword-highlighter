@@ -18,9 +18,11 @@ try {
 
 // UI-Texte setzen
 if (S.title)  document.title = S.title;
+if (S.title)  document.getElementById("title").textContent  = S.title;
 if (S.addCat) document.getElementById("add").textContent  = S.addCat;
 if (S.save)   document.getElementById("save").textContent = S.save;
 if (S.cancel) document.getElementById("cancel").textContent = S.cancel;
+if (S.hint)   document.getElementById("hint").textContent  = S.hint;
 
 function makeCatRow(cat, index) {
   var div = document.createElement("div");
