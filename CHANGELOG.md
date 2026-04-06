@@ -2,7 +2,7 @@
 
 All notable changes to Keyword Highlighter will be documented here.
 
-## v1.3.0
+## v1.3.0  
 
 - Added per-category highlight colors — each category has a color picker in the settings dialog
 - Colors are saved persistently and applied when highlighting
