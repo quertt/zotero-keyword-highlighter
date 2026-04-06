@@ -3,6 +3,7 @@
 var args = null;
 var cats = [];
 var S = {};  // lokalisierte Strings
+var defaultColors = ["#FFD700", "#00cc44", "#ff4455", "#00b7ff", "#cc88ff", "#FFA07A", "#98FB98"];
 
 try {
   args = window.arguments && window.arguments[0];
@@ -38,6 +39,11 @@ function makeCatRow(cat, index) {
   nameInput.value       = cat.name;
   nameInput.placeholder = S.placeholder || "Category name";
 
+  var colorInput = document.createElement("input");
+  colorInput.type      = "color";
+  colorInput.className = "cat-color";
+  colorInput.value     = cat.color || defaultColors[index % defaultColors.length];
+
   var delBtn = document.createElement("button");
   delBtn.className   = "del";
   delBtn.textContent = "\u2715";
@@ -48,6 +54,7 @@ function makeCatRow(cat, index) {
   });
 
   header.appendChild(nameInput);
+  header.appendChild(colorInput);
   header.appendChild(delBtn);
 
   var label = document.createElement("span");
@@ -75,8 +82,10 @@ function collectCats() {
   return Array.from(document.querySelectorAll(".cat")).map(function(row) {
     var nameEl = row.querySelector(".cat-name");
     var kwsEl  = row.querySelector(".cat-kws");
+    var colorEl = row.querySelector(".cat-color");
     return {
       name:     nameEl ? nameEl.value.trim() : "",
+      color:    colorEl ? colorEl.value : "#FFD700",
       keywords: kwsEl
         ? kwsEl.value.split(",").map(function(k) { return k.trim(); }).filter(Boolean)
         : []
@@ -86,7 +95,7 @@ function collectCats() {
 
 document.getElementById("add").addEventListener("click", function() {
   cats = collectCats();
-  cats.push({ name: "", keywords: [] });
+  cats.push({ name: "", color: defaultColors[cats.length % defaultColors.length], keywords: [] });
   renderCats();
 });
 

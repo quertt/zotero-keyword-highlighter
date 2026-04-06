@@ -2,6 +2,12 @@
 
 All notable changes to Keyword Highlighter will be documented here.
 
+## v1.3.0
+
+- Added per-category highlight colors — each category has a color picker in the settings dialog
+- Colors are saved persistently and applied when highlighting
+- Highlights spanning hyphenated line breaks are now correctly colored as a group
+
 ## v1.1.0
 
 - Added multilingual support: English, German, Spanish, French

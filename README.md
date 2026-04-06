@@ -6,9 +6,10 @@ A Zotero plugin that automatically highlights user-defined keywords in the PDF r
 
 ## Features
 
-- Define keyword lists organized into named categories
+- Define keyword lists organized into named **categories**, each with its own **highlight color**
 - Highlight all keywords in the currently open PDF with a single shortcut (**Ctrl+Shift+H**)
 - Keywords are highlighted using Zotero's built-in PDF search engine — no annotations are created
+- Each category's color is chosen via a color picker in the settings dialog and saved persistently
 - Highlights are temporary and disappear when the PDF is closed, keeping your library clean
 - Settings are saved persistently across sessions
 - Supports **English, German, Spanish, and French**
@@ -29,6 +30,7 @@ Go to **Tools → Keyword Highlighter…** to open the settings dialog.
 
 - Click **+ Add category** to create a new keyword group
 - Enter a category name (e.g. "Methods", "Results")
+- Pick a highlight color using the color swatch next to the category name
 - Add comma-separated keywords in the text area below
 - Click **Save**
 
@@ -82,6 +84,8 @@ keyword-highlighter/
 ### How it works
 
 The plugin hooks into Zotero's internal pdf.js `findController` and dispatches a `find` event with all defined keywords as a query array. This triggers the same highlighting mechanism used by the built-in Ctrl+F search — without any modifications to the PDF file or Zotero's database.
+
+PDF.js renders highlights as `<span class="highlight">` elements inside a nested `viewer.html` iframe. A `MutationObserver` watches for newly rendered highlight spans (including multi-span groups for hyphenated line-break words, marked with `.begin`/`.end` classes) and applies each category's color by setting `background-color` inline, overriding the viewer's default color.
 
 ## Contributing
 

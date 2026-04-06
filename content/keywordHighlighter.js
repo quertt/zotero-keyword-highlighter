@@ -201,10 +201,11 @@ KeywordHighlighter = {
     // All keywords combined for the find dispatch
     const keywordsJson = JSON.stringify(keywords);
     // Category data for per-keyword coloring
+    const defaultColors = ["#FFD700", "#00cc44", "#ff4455", "#00b7ff", "#cc88ff", "#FFA07A", "#98FB98"];
     const categoryDataJson = JSON.stringify(
       categories.map((c, i) => ({
         keywords: c.keywords.filter(k => k.trim()).map(k => k.trim().toLowerCase()),
-        color: ["#FFD700", "#00ff00", "#ff0026", "#00b7ff", "#DDA0DD", "#FFA07A", "#98FB98"][i % 7],
+        color: c.color || defaultColors[i % defaultColors.length],
       }))
     );
 
