@@ -196,13 +196,101 @@ KeywordHighlighter = {
     }
 
     const iframeWin = reader._iframeWindow;
-    const escaped = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    const keywordsJson = JSON.stringify(escaped);
+    const iframeDoc = iframeWin.document;
 
-    const script = `
+    // All keywords combined for the find dispatch
+    const keywordsJson = JSON.stringify(keywords);
+    // Category data for per-keyword coloring
+    const categoryDataJson = JSON.stringify(
+      categories.map((c, i) => ({
+        keywords: c.keywords.filter(k => k.trim()).map(k => k.trim().toLowerCase()),
+        color: ["#FFD700", "#00ff00", "#ff0026", "#00b7ff", "#DDA0DD", "#FFA07A", "#98FB98"][i % 7],
+      }))
+    );
+
+    const scriptEl = iframeDoc.createElement("script");
+    scriptEl.textContent = `
       (function() {
         var app = window.PDFViewerApplication;
         if (!app || !app.findController) return;
+
+        var categoryData = ${categoryDataJson};
+
+        // Build a lookup: lowercase keyword -> color
+        var kwColor = {};
+        categoryData.forEach(function(cat) {
+          cat.keywords.forEach(function(kw) { kwColor[kw] = cat.color; });
+        });
+
+        // Inject CSS into the nested viewer iframe
+        document.querySelectorAll('iframe').forEach(function(f) {
+          try {
+            var doc = f.contentDocument;
+            if (!doc || !doc.head) return;
+
+            function applyColor(spans) {
+              // Build two candidate strings: one with hyphens stripped (line-break case),
+              // one with hyphens kept (genuine hyphenated keywords like "well-known")
+              var textStripped = spans.map(function(el, i) {
+                var t = el.textContent;
+                return (i < spans.length - 1) ? t.replace(/-$/, '') : t;
+              }).join('').trim().toLowerCase();
+              var textHyphen = spans.map(function(el) { return el.textContent; }).join('').trim().toLowerCase();
+
+              var color = kwColor[textStripped] || kwColor[textHyphen];
+              if (!color) {
+                // Partial match — try both candidates
+                for (var kw in kwColor) {
+                  if (textStripped.includes(kw) || kw.includes(textStripped) ||
+                      textHyphen.includes(kw)   || kw.includes(textHyphen)) {
+                    color = kwColor[kw]; break;
+                  }
+                }
+              }
+              var hex = color || '#FFD700';
+              var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+              spans.forEach(function(el) {
+                el.style.setProperty('background-color', 'rgb(' + r + ' ' + g + ' ' + b + ' / 1)');
+              });
+            }
+
+            // Process all highlights in document order, grouping .begin/.end fragments
+            function colorAllHighlights() {
+              var all = Array.from(doc.querySelectorAll('.textLayer .highlight'));
+              var i = 0;
+              while (i < all.length) {
+                if (all[i].classList.contains('begin')) {
+                  var group = [all[i++]];
+                  while (i < all.length) {
+                    group.push(all[i]);
+                    if (all[i++].classList.contains('end')) break;
+                  }
+                  applyColor(group);
+                } else {
+                  applyColor([all[i++]]);
+                }
+              }
+            }
+
+            colorAllHighlights();
+
+            // Debounced observer: re-color whenever new highlights are added (e.g. pages rendered on scroll)
+            var debounceTimer = null;
+            var observer = new MutationObserver(function(mutations) {
+              var relevant = mutations.some(function(m) {
+                return Array.from(m.addedNodes).some(function(n) {
+                  return n.nodeType === 1 && (n.classList?.contains('highlight') || n.querySelector?.('.highlight'));
+                });
+              });
+              if (!relevant) return;
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(colorAllHighlights, 50);
+            });
+            observer.observe(doc.body, { childList: true, subtree: true });
+          } catch(e) { console.log('[KWHL] nested iframe error:', e); }
+        });
+
+        // Dispatch find for all keywords at once
         var bus = app.findController._eventBus || app.eventBus;
         bus.dispatch("find", {
           source:          window,
@@ -216,10 +304,7 @@ KeywordHighlighter = {
         });
       })();
     `;
-
-    const scriptEl = iframeWin.document.createElement("script");
-    scriptEl.textContent = script;
-    iframeWin.document.head.appendChild(scriptEl);
+    iframeDoc.head.appendChild(scriptEl);
     scriptEl.remove();
   } catch (err) {
     Zotero.logError(err);
