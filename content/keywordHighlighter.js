@@ -121,7 +121,9 @@ KeywordHighlighter = {
   },
 
   _watchForReaders(win) {
-    const interval = win.setInterval(() => {
+    // Run indefinitely so readers opened at any time get the shortcut registered.
+    // The __kwhlRegistered flag prevents duplicate listeners.
+    win.setInterval(() => {
       for (const reader of (Zotero.Reader?._readers || [])) {
         const iw = reader?._iframeWindow;
         if (!iw || iw.__kwhlRegistered) continue;
@@ -135,7 +137,6 @@ KeywordHighlighter = {
         }, true);
       }
     }, 1000);
-    win.setTimeout(() => win.clearInterval(interval), 600000);
   },
 
   // ── Preferences ───────────────────────────────────────────────────────────
@@ -189,7 +190,10 @@ KeywordHighlighter = {
       return;
     }
 
-    const reader = (Zotero.Reader?._readers || []).findLast(r => r?._iframeWindow);
+    const selectedTabID = win.Zotero_Tabs?.selectedID;
+    const reader = selectedTabID
+      ? (Zotero.Reader?._readers || []).find(r => r.tabID === selectedTabID && r?._iframeWindow)
+      : (Zotero.Reader?._readers || []).findLast(r => r?._iframeWindow);
     if (!reader) {
       win.alert(this._str("alert.no.pdf"));
       return;
@@ -224,6 +228,8 @@ KeywordHighlighter = {
         });
 
         // Inject CSS into the nested viewer iframe
+        var bus = app.findController._eventBus || app.eventBus;
+
         document.querySelectorAll('iframe').forEach(function(f) {
           try {
             var doc = f.contentDocument;
@@ -291,18 +297,27 @@ KeywordHighlighter = {
           } catch(e) { console.log('[KWHL] nested iframe error:', e); }
         });
 
-        // Dispatch find for all keywords at once
-        var bus = app.findController._eventBus || app.eventBus;
+        // Clear any existing find state first so PDF.js treats this as a fresh
+        // search even if the same query was previously active (prevents no-op).
         bus.dispatch("find", {
-          source:          window,
-          type:            "",
-          query:           ${keywordsJson},
-          caseSensitive:   false,
-          entireWord:      false,
-          highlightAll:    true,
-          findPrevious:    false,
-          matchDiacritics: false,
+          source: window, type: "", query: "",
+          caseSensitive: false, entireWord: false, highlightAll: false,
+          findPrevious: false, matchDiacritics: false,
         });
+
+        // Dispatch find for all keywords at once
+        setTimeout(function() {
+          bus.dispatch("find", {
+            source:          window,
+            type:            "",
+            query:           ${keywordsJson},
+            caseSensitive:   false,
+            entireWord:      false,
+            highlightAll:    true,
+            findPrevious:    false,
+            matchDiacritics: false,
+          });
+        }, 0);
       })();
     `;
     iframeDoc.head.appendChild(scriptEl);
