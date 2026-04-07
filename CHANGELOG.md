@@ -2,6 +2,9 @@
 
 All notable changes to Keyword Highlighter will be documented here.
 
+## v1.3.1
+- Fixed a bug where only last opened pdf was being highlighted correctly  
+
 ## v1.3.0  
 
 - Added per-category highlight colors — each category has a color picker in the settings dialog
