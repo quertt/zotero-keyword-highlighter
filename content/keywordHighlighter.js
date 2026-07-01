@@ -183,7 +183,27 @@ KeywordHighlighter = {
   async highlight(win) {
     try {
     const categories = this._loadCategories();
-    const keywords = categories.flatMap(c => c.keywords.filter(k => k.trim()));
+
+    // Keywords wrapped in "..." require whole-word matching. Strip the quotes
+    // and record those keywords separately so the injected script can enforce
+    // word-boundary checks after PDF.js highlights them.
+    const exactKeywordsSet = new Set();
+    const processedCategories = categories.map(c => ({
+      ...c,
+      keywords: c.keywords
+        .map(k => {
+          const t = k.trim();
+          if (t.length > 2 && t.startsWith('"') && t.endsWith('"')) {
+            const stripped = t.slice(1, -1).trim();
+            exactKeywordsSet.add(stripped.toLowerCase());
+            return stripped;
+          }
+          return t;
+        })
+        .filter(k => k),
+    }));
+
+    const keywords = processedCategories.flatMap(c => c.keywords.filter(k => k.trim()));
 
     if (!keywords.length) {
       win.alert(this._str("alert.no.keywords"));
@@ -204,10 +224,12 @@ KeywordHighlighter = {
 
     // All keywords combined for the find dispatch
     const keywordsJson = JSON.stringify(keywords);
+    // Exact (quoted) keywords that need whole-word enforcement in the injected script
+    const exactKeywordsJson = JSON.stringify([...exactKeywordsSet]);
     // Category data for per-keyword coloring
     const defaultColors = ["#FFD700", "#00cc44", "#ff4455", "#00b7ff", "#cc88ff", "#FFA07A", "#98FB98"];
     const categoryDataJson = JSON.stringify(
-      categories.map((c, i) => ({
+      processedCategories.map((c, i) => ({
         keywords: c.keywords.filter(k => k.trim()).map(k => k.trim().toLowerCase()),
         color: c.color || defaultColors[i % defaultColors.length],
       }))
@@ -227,6 +249,12 @@ KeywordHighlighter = {
           cat.keywords.forEach(function(kw) { kwColor[kw] = cat.color; });
         });
 
+        // Keywords that require whole-word matching (were entered with "quotes").
+        // PDF.js is dispatched with entireWord:false for all keywords so they are
+        // found as substrings first; non-whole-word matches are then suppressed here.
+        var exactSet = {};
+        ${exactKeywordsJson}.forEach(function(k) { exactSet[k] = true; });
+
         // Inject CSS into the nested viewer iframe
         var bus = app.findController._eventBus || app.eventBus;
 
@@ -235,25 +263,122 @@ KeywordHighlighter = {
             var doc = f.contentDocument;
             if (!doc || !doc.head) return;
 
+            // Returns true when the highlight group sits at a word boundary.
+            // NOTE: textContent on cross-document nodes in Gecko returns a DOM
+            // string wrapper, not a plain JS primitive. RegExp.test() and even
+            // charCodeAt() can behave unexpectedly on such values. We coerce
+            // every string through String() before inspection.
+            function isWholeWord(spans) {
+              function isWordChar(c) {
+                if (!c) return false;
+                var code = String(c).charCodeAt(0);
+                return (code >= 65 && code <= 90) ||   // A–Z
+                       (code >= 97 && code <= 122) ||  // a–z
+                       (code >= 48 && code <= 57)  ||  // 0–9
+                       code === 95;                    // _
+              }
+
+              function charAt(str, pos) {
+                var s = String(str || '');
+                return pos === 'last' ? s.slice(-1) : s.charAt(0);
+              }
+
+              function prevChar(node) {
+                var sib = node.previousSibling;
+                if (sib) return charAt(sib.textContent, 'last');
+                var par = node.parentNode;
+                if (par) {
+                  var parSib = par.previousSibling;
+                  if (parSib) return charAt(parSib.textContent, 'last');
+                }
+                return '';
+              }
+
+              function nextChar(node) {
+                var sib = node.nextSibling;
+                var t = String(sib ? sib.textContent || '' : '');
+                var c = t.charAt(0);
+
+                // If a hyphen follows, the word may continue past it —
+                // either as an infix (well-known) or a line-break hyphen
+                // ("stress-" + "es" across lines). Look past the hyphen.
+                if (c === '-') {
+                  var afterHyphen = t.slice(1).charAt(0);
+                  if (afterHyphen) return afterHyphen;
+                  // Hyphen was the only character in this text node (end-of-line).
+                  // Check the first character of the next text item.
+                  var par = node.parentNode;
+                  if (par && par.nextSibling) {
+                    return String(par.nextSibling.textContent || '').charAt(0);
+                  }
+                  return c;
+                }
+
+                if (c) return c;
+
+                // No adjacent sibling text — check the parent text item's neighbor.
+                var par2 = node.parentNode;
+                if (par2) {
+                  var parSib = par2.nextSibling;
+                  if (parSib) return String(parSib.textContent || '').charAt(0);
+                }
+                return '';
+              }
+
+              var pc = prevChar(spans[0]);
+              var nc = nextChar(spans[spans.length - 1]);
+              return !isWordChar(pc) && !isWordChar(nc);
+            }
+
             function applyColor(spans) {
-              // Build two candidate strings: one with hyphens stripped (line-break case),
-              // one with hyphens kept (genuine hyphenated keywords like "well-known")
-              var textStripped = spans.map(function(el, i) {
-                var t = el.textContent;
+              // textStripped: hyphens stripped from non-last spans, joined without separator.
+              // textHyphen:   raw join, hyphens preserved (genuine compounds like "well-known").
+              var parts = spans.map(function(el, i) {
+                var t = String(el.textContent || '');
                 return (i < spans.length - 1) ? t.replace(/-$/, '') : t;
-              }).join('').trim().toLowerCase();
-              var textHyphen = spans.map(function(el) { return el.textContent; }).join('').trim().toLowerCase();
+              });
+              var textStripped = parts.join('').trim().toLowerCase();
+              var textHyphen   = spans.map(function(el) { return String(el.textContent || ''); }).join('').trim().toLowerCase();
 
               var color = kwColor[textStripped] || kwColor[textHyphen];
+              var matchedKw = kwColor[textStripped] ? textStripped
+                            : kwColor[textHyphen]   ? textHyphen
+                            : null;
+
+              // Multi-word keywords that span text items (e.g. "residual stress" across a
+              // line break) produce kerning-split sub-spans. Joining them gives "residualstress"
+              // (no space). Match by comparing stripped against keywords with spaces removed.
               if (!color) {
-                // Partial match — try both candidates
                 for (var kw in kwColor) {
-                  if (textStripped.includes(kw) || kw.includes(textStripped) ||
-                      textHyphen.includes(kw)   || kw.includes(textHyphen)) {
-                    color = kwColor[kw]; break;
+                  if (kw.replace(/\s+/g, '') === textStripped) {
+                    color = kwColor[kw];
+                    matchedKw = kw;
+                    break;
                   }
                 }
               }
+
+              if (!color) {
+                // Partial match fallback
+                for (var kw in kwColor) {
+                  if (textStripped.includes(kw) || kw.includes(textStripped) ||
+                      textHyphen.includes(kw)   || kw.includes(textHyphen)) {
+                    color = kwColor[kw];
+                    matchedKw = kw;
+                    break;
+                  }
+                }
+              }
+
+              // Whole-word enforcement: if this keyword was entered with quotes,
+              // suppress the highlight when it is not at a word boundary.
+              if (matchedKw && exactSet[matchedKw] && !isWholeWord(spans)) {
+                spans.forEach(function(el) {
+                  el.style.setProperty('background-color', 'transparent');
+                });
+                return;
+              }
+
               var hex = color || '#FFD700';
               var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
               spans.forEach(function(el) {
